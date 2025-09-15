@@ -3264,17 +3264,7 @@ FunctionsHandler.MeleesController:RegisterMethod("Start", function()
                     return print("[ Debug ] Failed to get melee id of", Melee) 
                 end 
                 
-                if PlayerData[Index] < Value then 
-    ValuementPassed = false 
-                                    
-    -- chỉ yêu cầu farm nếu chưa sở hữu melee
-    if not ScriptStorage.Melees[Melee] and not ScriptStorage.Tools[Melee] then 
-        MSet = true
-        SetTask("SubTask", "Farming Until Enough " .. Index .. " ( ".. Value .. " ) For " .. Melee)
-        return
-    end
-end
-
+                
                 
                 if not MSet and ScriptStorage.Melees[Melee] and ScriptStorage.Melees[Melee] < Data.NextLevelRequirement then 
                     SetTask("SubTask", "Farming Until Enough Mastery For " .. Melee .. " ( " .. ScriptStorage.Melees[Melee] .. " / " .. Data.NextLevelRequirement .. " ).") 
