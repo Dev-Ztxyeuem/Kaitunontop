@@ -532,10 +532,8 @@ function ResearchMoves(Child)
     Result = Result == "" and "[0]" or Result
     if ReturnOrSet then return Result end
 end
-
-
-    function MeleeCheck(Child)
-        print("Melee check", Child) 
+function MeleeCheck(Child)
+        print("Melee check", Child)
     
         if Child and typeof(Child) == "Instance" and Child:IsA("Tool") then
             if Child.ToolTip == "Melee" then
@@ -573,12 +571,11 @@ end
                 end)
             end
         end
-    end
-
-
+    end 
 MeleeCheck(LocalPlayer.Character:FindFirstChildOfClass("Tool"))
     
     RefreshPlayerData()
+    
     function RegisterLocalPlayerEventsConnection()
     
         task.spawn(function()
@@ -645,7 +642,7 @@ MeleeCheck(LocalPlayer.Character:FindFirstChildOfClass("Tool"))
     end)
     
     task.spawn(function()
-        task.wait(3)
+        task.wait(1)
         if LocalPlayer.Character:FindFirstChild("HasBuso") then
             return
         end
@@ -962,8 +959,14 @@ Portals = ({
         Vector3.new(-6508.5581054688, 89.034996032715, -132.83953857422)
     },
     {
-        
-    }
+        Vector3.new(-12471, 374, -7551),
+        Vector3.new(5756, 610, -282),
+        Vector3.new(-12001, 332, -8861),
+        Vector3.new(5319, 23, -93),
+        Vector3.new(28286, 14897, 103),
+        Vector3.new(-2097.3447265625, 4776.24462890625, -15013.4990234375),
+        Vector3.new(5314.58203, 22.5364361, -125.942276)
+    },
 })[SeaIndex]
 
 BossesOrder = {
@@ -2834,53 +2837,31 @@ Remotes.RefreshQuestPro.OnClientEvent:Connect(FunctionsHandler.Saber.Methods.Ref
 --Auto Melees
 
 
--- Cache melee đã full mastery
-local FullyMasteredMelees = {}
-
--- Hàm update cache
-local function UpdateMeleeMastery(Melee, Mastery, Requirement)
-    if Mastery and Requirement and Mastery >= Requirement then
-        FullyMasteredMelees[Melee] = true
-    end
-end
-
--- Hàm check xem melee đã full mastery
-local function IsMeleeDone(Melee)
-    return FullyMasteredMelees[Melee] == true
-end
-
--- Bắt đầu Auto Melee
 MeleeLastCursor = 1
 FunctionsHandler.MeleesController:RegisterMethod("Start", function()
     
-    for Cursor, Melee in pairs(MeleesTable) do
+    for Cursor, Melee in MeleesTable do
         if Melee ~= 'SanguineArt' then 
-
-            -- Nếu melee đã đủ mastery thì bỏ qua luôn
-            if IsMeleeDone(Melee) then
-                MeleeLastCursor = Cursor + 1
-                continue
-            end
             
-           
+            
             if not Config.Items.AutoFullyMelees then
-                break
-            end
+                
+                break 
+            end 
             
-            local Data = MeleePrices[Melee]
+            Data = MeleePrices[Melee]
             if not Data then 
                 print("no m1 data")
-                break
+                break 
             end
             
-            -- Dragon Talon logic
             if Melee == "Dragon Talon" then 
                 IsFireEssenceGave = (function()
                     if IsFireEssenceGave ~= nil then
                         return IsFireEssenceGave
                     end 
                     
-                    local PurchaseTestResult = Remotes.CommF_:InvokeServer("BuyDragonTalon", true)
+                    local PurchaseTestResult = Remotes.CommF_:InvokeServer("BuyDragonTalon", true);
                     alert("Dragon Talon Purchased", tostring(typeof(PurchaseTestResult) ~= "string"))
                     return typeof(PurchaseTestResult) ~= "string" and true or false
                 end)()
@@ -2889,18 +2870,21 @@ FunctionsHandler.MeleesController:RegisterMethod("Start", function()
                 
                 if not IsFireEssenceGave then
                     print("no fire essence provided")
-                    break
+                    break 
                 end 
             end 
-            
-            -- Godhuman logic
             if Melee == "Godhuman" and not GodHumanFlag then 
+                
                 if (ScriptStorage.Melees["Dragon Talon"] or 0) > 399 then
+                
                     if not ScriptStorage.Melees.Godhuman then 
+                        
                         Remotes.CommF_:InvokeServer("BuyGodhuman", true)
                         Remotes.CommF_:InvokeServer("BuyGodhuman")
                         FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Melee")
+                        
                         if not ScriptStorage.Melees.Godhuman then 
+                            
                             GodHumanFlag = true
                             return
                         end 
@@ -2908,13 +2892,9 @@ FunctionsHandler.MeleesController:RegisterMethod("Start", function()
                 end 
             end
             
-            -- Check
-            local MeleeOwned = ScriptStorage.Melees[Melee] -- mastery
-            local Requirement = Data.NextLevelRequirement or 0
-            UpdateMeleeMastery(Melee, MeleeOwned, Requirement)
-            
-            
-            local MeleeId = GetMeleeIdByName(Melee)
+            if not ScriptStorage.Melees[Melee] or ( ScriptStorage .Melees[Melee] or 0) < Data.NextLevelRequirement then 
+                
+                local MeleeId = GetMeleeIdByName(Melee)
                 local PlayerData = ScriptStorage.PlayerData 
                 local ValuementPassed = true 
                 
@@ -2924,8 +2904,7 @@ FunctionsHandler.MeleesController:RegisterMethod("Start", function()
                 end 
                local MeleeOwned = ScriptStorage.Melees[Melee]
 
--- Chỉ check Beli/Fragments khi chưa có melee
-if not MeleeOwned then
+if MeleeOwned then
     MSet = false
     ValuementPassed = true
     
@@ -2933,49 +2912,58 @@ if not MeleeOwned then
         if (PlayerData[Index] or 0) < Value then
             ValuementPassed = false
             MSet = true
-            break
+            return 
         end
     end
-end 
-            -- Nếu đã có melee nhưng mastery chưa đủ và không có tool, mua tool
-            if not MSet and ScriptStorage.Melees[Melee] and ScriptStorage.Melees[Melee] < Requirement then 
-                if not ScriptStorage.Tools[Melee] then 
-                    print("no m1 found, buy")
-                    Data.Buy() 
-                end 
-                return
-            end 
-            
-            -- Nếu đủ điều kiện, mua + equip
-            if ValuementPassed and Data.Requirements() and not ScriptStorage.Tools[Melee] then
-                if Melee == "Dragon Talon" and not IsFireEssenceGave then  
-                    alert("IsFireEssenceGave", tostring(IsFireEssenceGave))
+end
+
+                
+                if not MSet and ScriptStorage.Melees[Melee] and ScriptStorage.Melees[Melee] < Data.NextLevelRequirement then 
+                    if not ScriptStorage.Tools[Melee] then 
+                        print("no m1 found, buy")
+                        Data.Buy() 
+                    end 
                     return
                 end 
-                Data.Buy() 
-                FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Melee")
+                 
                 
-                -- Check nếu tool chưa có, fallback logic
-                if not ScriptStorage.Tools[Melee] then
-                    task.wait()
-                    if not ScriptStorage.Tools[Melee] then 
-                        if (Melee == "Death Step" or Melee == "Sharkman Karate") and SeaIndex ~= 2 then
-                            alert("Go Back To Second Sea", "Water Key / Library Key")
-                            Remotes.CommF_:InvokeServer("TravelDressrosa")
-                        end
+                
+                if ValuementPassed and Data.Requirements() and not ScriptStorage.Tools[Melee] then
+                    if Melee == "Dragon Talon" and not IsFireEssenceGave then 
+                        alert("IsFireEssenceGave", tostring(IsFireEssenceGave))
+                        return
+                    end 
+                    Data.Buy() 
+                    
+                    
+         
+                    FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Melee")
+                    if not ScriptStorage.Tools[Melee] then
+                        
+                        
+                        task.wait()
+                        if not ScriptStorage.Tools[Melee] then 
+                            if ( Melee == "Death Step" or Melee == "Sharkman Karate" ) and SeaIndex ~= 2 then
+                            
+                                alert("Go Back To Second Sea", "Water Key / Library Key")
+                                Remotes.CommF_:InvokeServer("TravelDressrosa")
+                            end 
+                        else 
+                            MeleeLastCursor = Cursor + 1
+                            
+                            return
+                        end 
                     else 
                         MeleeLastCursor = Cursor + 1
                         return
-                    end
-                else 
-                    MeleeLastCursor = Cursor + 1
-                    return
+                    end 
                 end
+                 
             else 
                 MeleeLastCursor = Cursor + 1
             end
-        end
-    end
+        end 
+     end
     FarmingItem = nil 
     for ItemName, Item in ScriptStorage.Backpack do
         if Item.Type == "Sword" then 
@@ -3457,7 +3445,7 @@ FunctionsHandler.UtillyItemsActivitation:RegisterMethod("Refresh", function()
             table.insert(RemoveList, "Awakened Ice Admiral") 
         end 
         
-        local Response = not ScriptStorage.Melees["Sharkman Karate"] and Remotes.CommF_:InvokeServer("BuySharkmanKarate", true); 
+        local Response = not ScriptStorage.Melees["Sharkman Karate"]
         
         SharkmanPassed = typeof(Response) == "string"
      --   alert("SharkmanPassed", SharkmanPassed)
@@ -3518,7 +3506,7 @@ FunctionsHandler.UtillyItemsActivitation:RegisterMethod("Refresh", function()
                 end 
             end 
         end 
-        if not Storage:Get("Sea3Unlocked") and FunctionsHandler.Trevor:Get("IsCompleted") and not Storage:Get("SwanDefeated") then
+        if FunctionsHandler.Trevor:Get("IsCompleted") and not Storage:Get("SwanDefeated") then
             print("Added Don Swan to boss orser list")
             BossesOrderLevel["Don Swan"] = 1100 
             table.insert(BossesOrder, "Don Swan")
