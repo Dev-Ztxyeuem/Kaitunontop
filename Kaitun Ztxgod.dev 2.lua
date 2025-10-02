@@ -3518,20 +3518,19 @@ FunctionsHandler.UtillyItemsActivitation:RegisterMethod("Refresh", function()
                 end 
             end 
         end 
-        if FunctionsHandler.Trevor:Get("IsCompleted") and not Storage:Get("SwanDefeated") then
+        if not Storage:Get("Sea3Unlocked") and FunctionsHandler.Trevor:Get("IsCompleted") and not Storage:Get("SwanDefeated") then
             print("Added Don Swan to boss orser list")
             BossesOrderLevel["Don Swan"] = 1100 
             table.insert(BossesOrder, "Don Swan")
             print(ScriptStorage.PlayerData.Level, ScriptStorage.Enemies["Don Swan"])
-            if SeaIndex == 2 and ScriptStorage.PlayerData.Level > 1500 and not ScriptStorage.Enemies["Don Swan"] then 
+            if SeaIndex == 2 and ScriptStorage.PlayerData.Level < 1500 and not ScriptStorage.Enemies["Don Swan"] then 
                  
                 print("hop")
                 alert("Don Swan", "Hopping for don swan")
                 Hop("Hop for don swan")
             end 
         end 
-    end
-    
+    end 
     for Index, Value in SpecialItems do 
         if ScriptStorage.Tools[Value] then 
             FunctionsHandler.UtillyItemsActivitation:Set("CurrentProgressLevel", Value)
