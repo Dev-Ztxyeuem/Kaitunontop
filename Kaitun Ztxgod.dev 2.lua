@@ -2925,7 +2925,7 @@ FunctionsHandler.MeleesController:RegisterMethod("Start", function()
                local MeleeOwned = ScriptStorage.Melees[Melee]
 
 -- Chỉ check Beli/Fragments khi chưa có melee
-if  MeleeOwned then
+if not MeleeOwned then
     MSet = false
     ValuementPassed = true
     
