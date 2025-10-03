@@ -1,4 +1,4 @@
-  if os.time() >= 1756319996 then 
+ if os.time() >= 1756319996 then 
   --  while true do end 
 end 
 
@@ -533,49 +533,53 @@ function ResearchMoves(Child)
     if ReturnOrSet then return Result end
 end
 function MeleeCheck(Child)
-        print("Melee check", Child)
-    
-        if Child and typeof(Child) == "Instance" and Child:IsA("Tool") then
-            if Child.ToolTip == "Melee" then
-    
-                -- task.spawn(function() 
-                --   CheckMeleeBurstMove(Child)
-                -- end) 
-    
-                if ScriptStorage.Connections.Melees then
-    
-                    ScriptStorage.Connections.Melees:Disconnect()
-                end
-    
-                ScriptStorage.CurrentMeleeData.Name = Child.Name
-                pcall(function()
-                    ScriptStorage.Connections.Melees:Destroy()
-                end)
-    
-                ScriptStorage.Connections.Melees = Child.Level.Changed:Connect(function(Value)
-    
-                    ScriptStorage.Melees[Child.Name] = Value
-                    RefreshMelees()
-                end)
-                ScriptStorage.Melees[Child.Name] = Child.Level.Value
-                RefreshMelees()
-    
-            elseif string.find(tostring(Child), "Fruit") then
-                task.spawn(function()
-    
-                    if table.find(ScriptStorage.IgnoreStoreFruits, Child:GetAttribute("OriginalName")) then
-                        return
-                    end
-                    local StoreResult = Remotes.CommF_:InvokeServer("StoreFruit", Child:GetAttribute("OriginalName"), Child)
-    
-                end)
-            end
+    if not Child or typeof(Child) ~= "Instance" or not Child:IsA("Tool") then
+        return
+    end
+
+    -- Chỉ quan tâm melee
+    if Child.ToolTip == "Melee" then
+        -- Ngắt connection cũ nếu có
+        if ScriptStorage.Connections.Melees then
+            ScriptStorage.Connections.Melees:Disconnect()
         end
-    end 
-MeleeCheck(LocalPlayer.Character:FindFirstChildOfClass("Tool"))
-    
-    RefreshPlayerData()
-    
+
+        ScriptStorage.CurrentMeleeData.Name = Child.Name
+
+        -- Update trực tiếp vào Melees table
+        ScriptStorage.Melees[Child.Name] = Child:FindFirstChild("Level") and Child.Level.Value or 0
+        RefreshMelees()
+
+        -- Kết nối event Level.Changed để tự động update
+        local levelObj = Child:FindFirstChild("Level")
+        if levelObj then
+            ScriptStorage.Connections.Melees = levelObj.Changed:Connect(function(Value)
+                ScriptStorage.Melees[Child.Name] = Value
+                RefreshMelees()
+            end)
+        end
+
+    elseif string.find(tostring(Child), "Fruit") then
+        task.spawn(function()
+            if table.find(ScriptStorage.IgnoreStoreFruits, Child:GetAttribute("OriginalName")) then
+                return
+            end
+            Remotes.CommF_:InvokeServer("StoreFruit", Child:GetAttribute("OriginalName"), Child)
+        end)
+    end
+end
+
+
+-- Ví dụ gọi
+for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
+    if tool:IsA("Tool") then
+        MeleeCheck(tool)
+    end
+end
+
+RefreshPlayerData()
+
+
     function RegisterLocalPlayerEventsConnection()
     
         task.spawn(function()
@@ -657,23 +661,23 @@ MeleesTable = {
     "Dragon Claw",
     "Superhuman",
     "Death Step",
-    "Electric Claw",
     "Sharkman Karate",
+    "Electric Claw",
     "Dragon Talon",
     "Godhuman",
     "SanguineArt"
 }
 
 MeleesId =  {
-    "BlackLeg",
+    "Black Leg",
     "Electro",
-    "FishmanKarate",
-    "DragonClaw",
+    "Fishman Karate",
+    "Dragon Claw",
     "Superhuman",
-    "DeathStep",
-    "ElectricClaw",
-    "SharkmanKarate",
-    "DragonTalon",
+    "Death Step",
+    "Sharkman Karate",
+    "Electric Claw",
+    "Dragon Talon",
     "Godhuman",
     "SanguineArt"
 } 
@@ -761,11 +765,12 @@ MeleePrices = {
             BuyMelee("DeathStep")
         end 
     },
-    ["Electric Claw"] = 
+    
+["Electric Claw"] = 
     {
         Price = 
         {
-            Beli = 2500000, 
+            Beli = 3000000, 
             Fragments = 5000
         }, 
         NextLevelRequirement = 400, 
@@ -791,6 +796,7 @@ MeleePrices = {
             BuyMelee("SharkmanKarate")
         end 
     }, 
+
     ["Dragon Talon"] = 
     {
         Price = 
@@ -2839,22 +2845,20 @@ Remotes.RefreshQuestPro.OnClientEvent:Connect(FunctionsHandler.Saber.Methods.Ref
 
 MeleeLastCursor = 1
 FunctionsHandler.MeleesController:RegisterMethod("Start", function()
-    
-    for Cursor, Melee in MeleesTable do
+    for Cursor, Melee in ipairs(MeleesTable) do
         if Melee ~= 'SanguineArt' then 
             
-            
             if not Config.Items.AutoFullyMelees then
-                
                 break 
             end 
             
-            Data = MeleePrices[Melee]
+            local Data = MeleePrices[Melee]
             if not Data then 
                 print("no m1 data")
                 break 
             end
             
+            -- Special check cho Dragon Talon
             if Melee == "Dragon Talon" then 
                 IsFireEssenceGave = (function()
                     if IsFireEssenceGave ~= nil then
@@ -2873,51 +2877,46 @@ FunctionsHandler.MeleesController:RegisterMethod("Start", function()
                     break 
                 end 
             end 
+
+            -- Special check cho Godhuman
             if Melee == "Godhuman" and not GodHumanFlag then 
-                
                 if (ScriptStorage.Melees["Dragon Talon"] or 0) > 399 then
-                
                     if not ScriptStorage.Melees.Godhuman then 
-                        
                         Remotes.CommF_:InvokeServer("BuyGodhuman", true)
                         Remotes.CommF_:InvokeServer("BuyGodhuman")
                         FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Melee")
                         
                         if not ScriptStorage.Melees.Godhuman then 
-                            
                             GodHumanFlag = true
                             return
                         end 
                     end 
                 end 
             end
-            
-            if not ScriptStorage.Melees[Melee] or ( ScriptStorage .Melees[Melee] or 0) < Data.NextLevelRequirement then 
-                
+
+            -- Check điều kiện level
+            if not ScriptStorage.Melees[Melee] or (ScriptStorage.Melees[Melee] or 0) < Data.NextLevelRequirement then 
                 local MeleeId = GetMeleeIdByName(Melee)
                 local PlayerData = ScriptStorage.PlayerData 
-                local ValuementPassed = true 
-                
+                local MSet = false
+                local ValuementPassed = true
+
                 if not MeleeId then 
-                    
                     return print("[ Debug ] Failed to get melee id of", Melee) 
                 end 
-               local MeleeOwned = ScriptStorage.Melees[Melee]
 
-if MeleeOwned then
-    MSet = false
-    ValuementPassed = true
-    
-    for Index, Value in Data.Price do
-        if (PlayerData[Index] or 0) < Value then
-            ValuementPassed = false
-            MSet = true
-            return 
-        end
-    end
-end
+                -- Check đủ resources (Beli/Fragments)
+                for Index, Value in pairs(Data.Price) do
+                    if (PlayerData[Index] or 0) < Value then
+                        ValuementPassed = false
+                        if not ScriptStorage.Melees[Melee] then
+                            MSet = true
+                        end
+                        break
+                    end
+                end
 
-                
+                -- Nếu chưa đủ level melee hiện tại
                 if not MSet and ScriptStorage.Melees[Melee] and ScriptStorage.Melees[Melee] < Data.NextLevelRequirement then 
                     if not ScriptStorage.Tools[Melee] then 
                         print("no m1 found, buy")
@@ -2925,32 +2924,26 @@ end
                     end 
                     return
                 end 
-                 
-                
-                
-                if ValuementPassed and Data.Requirements() and not ScriptStorage.Tools[Melee] then
+
+                -- Mua melee nếu đủ điều kiện
+                if (ValuementPassed or MSet) and Data.Requirements() and not ScriptStorage.Tools[Melee] then
                     if Melee == "Dragon Talon" and not IsFireEssenceGave then 
                         alert("IsFireEssenceGave", tostring(IsFireEssenceGave))
                         return
                     end 
+
                     Data.Buy() 
-                    
-                    
-         
                     FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Melee")
+
                     if not ScriptStorage.Tools[Melee] then
-                        
-                        
                         task.wait()
                         if not ScriptStorage.Tools[Melee] then 
-                            if ( Melee == "Death Step" or Melee == "Sharkman Karate" ) and SeaIndex ~= 2 then
-                            
+                            if (Melee == "Death Step" or Melee == "Sharkman Karate") and SeaIndex ~= 2 then
                                 alert("Go Back To Second Sea", "Water Key / Library Key")
                                 Remotes.CommF_:InvokeServer("TravelDressrosa")
                             end 
                         else 
                             MeleeLastCursor = Cursor + 1
-                            
                             return
                         end 
                     else 
@@ -2961,10 +2954,10 @@ end
                  
             else 
                 MeleeLastCursor = Cursor + 1
-            end
-        end 
-     end
-    FarmingItem = nil 
+            end 
+        end
+    end
+  FarmingItem = nil 
     for ItemName, Item in ScriptStorage.Backpack do
         if Item.Type == "Sword" then 
             
@@ -3530,7 +3523,7 @@ FunctionsHandler.UtillyItemsActivitation:RegisterMethod("Refresh", function()
 
 
 
-if SeaIndex == 3 and ( ScriptStorage.Melees["Death Step"] or 0 ) >= 400 and ( ScriptStorage.Melees["Black Leg"] or 0 ) >= 400 and ScriptStorage.PlayerData.Beli >= 2500000 and ScriptStorage.PlayerData.Fragments >= 5000 and not ScriptStorage.Melees["Electric Claw"] then 
+if SeaIndex == 3 and ( ScriptStorage.Melees["Death Step"] or 0 ) >= 400 and ( ScriptStorage.Melees["Black Leg"] or 0 ) >= 400 and ScriptStorage.PlayerData.Beli >= 3000000 and ScriptStorage.PlayerData.Fragments >= 5000 and not ScriptStorage.Melees["Electric Claw"] then 
         FunctionsHandler.UtillyItemsActivitation:Set("CurrentProgressLevel", "Previous Hero")
         return "Previous Hero"
     end 
