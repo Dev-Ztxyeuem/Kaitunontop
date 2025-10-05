@@ -965,13 +965,7 @@ Portals = ({
         Vector3.new(-6508.5581054688, 89.034996032715, -132.83953857422)
     },
     {
-        Vector3.new(-12471, 374, -7551),
-        Vector3.new(5756, 610, -282),
-        Vector3.new(-12001, 332, -8861),
-        Vector3.new(5319, 23, -93),
-        Vector3.new(28286, 14897, 103),
-        Vector3.new(-2097.3447265625, 4776.24462890625, -15013.4990234375),
-        Vector3.new(5314.58203, 22.5364361, -125.942276)
+    
     },
 })[SeaIndex]
 
@@ -2376,26 +2370,35 @@ FunctionsHandler.LevelFarm:RegisterMethod("Refresh", function()
 end)
 
 FunctionsHandler.LevelFarm:RegisterMethod("Start", function(Level) 
-    if SeaIndex == 3 then 
-        if ( ScriptStorage.Backpack.Bones or {Count = 0}).Count >= 50 and ( ScriptStorage.PlayerData.Level < MaxLevel or ForceToRollBone ) then 
-            
-            if os.time() > (BonesCooldown or 0) then 
-                
-                local _, _, State, Message = Remotes.CommF_:InvokeServer("Bones", "Check") 
-                print("State", State, "Message", Message)
-                if tonumber(State or 1) == 0 then 
-                    local SplitedNum = Split(Message, ":")
+   if SeaIndex == 3 then 
+    if (ScriptStorage.Backpack.Bones or {Count = 0}).Count >= 50 
+       and (ScriptStorage.PlayerData.Level < MaxLevel or ForceToRollBone) then 
+
+        if os.time() > (BonesCooldown or 0) then 
+
+            local _, _, State, Message = Remotes.CommF_:InvokeServer("Bones", "Check") 
+            print("State", State, "Message", Message)
+
+            if tonumber(State or 1) == 0 then 
+                local SplitedNum = Split(Message, ":")
+                if SplitedNum and tonumber(SplitedNum[1]) and tonumber(SplitedNum[2]) then
                     local SecondsLeft = ((tonumber(SplitedNum[1]) * 60) + tonumber(SplitedNum[2])) * 60 
                     BonesCooldown = os.time() + SecondsLeft
                     print("Next", BonesCooldown)
-                else 
-                    print("Roll")
-                    Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                else
+                    -- Nếu server trả message lỗi, đặt cooldown ngắn để thử lại
+                    BonesCooldown = os.time() + 10
+                    print("Invalid cooldown message, retrying soon...")
                 end
-            end 
+            else 
+                print("Roll")
+                Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                BonesCooldown = os.time() + 5 -- thêm delay nhỏ để tránh spam, giúp auto roll liên tục
+            end
         end 
     end 
-    
+end
+
     local PlayerLevel = ScriptStorage.PlayerData.Level 
     if GodHumanFlag then 
     
@@ -2905,12 +2908,24 @@ FunctionsHandler.MeleesController:RegisterMethod("Start", function()
                     return print("[ Debug ] Failed to get melee id of", Melee) 
                 end 
 
-                -- Check đủ resources (Beli/Fragments)
+             
+
+            
                 for Index, Value in pairs(Data.Price) do
                     if (PlayerData[Index] or 0) < Value then
                         ValuementPassed = false
                         if not ScriptStorage.Melees[Melee] then
                             MSet = true
+                        end
+                        break
+                    end
+                end
+
+for  Index, Value in pairs(Data.Price) do
+                    if (PlayerData[Index] or 0) < Value then
+                        ValuementPassed = true
+                        if  ScriptStorage.Melees[Melee] then
+                            MSet = false
                         end
                         break
                     end
@@ -4384,7 +4399,7 @@ end)
 
 
 
-local fluent = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local fluent = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Dev-Ztxyeuem/Kaitunontop/refs/heads/main/Kaitun%20Ztxgod.dev.lua"))()
 
 Window = fluent:CreateWindow{
     Title = "Skibidi| Blox Fruit",
