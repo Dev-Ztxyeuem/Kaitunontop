@@ -2914,22 +2914,13 @@ FunctionsHandler.MeleesController:RegisterMethod("Start", function()
                 for Index, Value in pairs(Data.Price) do
                     if (PlayerData[Index] or 0) < Value then
                         ValuementPassed = false
-                        if not ScriptStorage.Melees[Melee] then
+                        if ScriptStorage.Melees[Melee] then
                             MSet = true
                         end
                         break
                     end
                 end
 
-for  Index, Value in pairs(Data.Price) do
-                    if (PlayerData[Index] or 0) < Value then
-                        ValuementPassed = true
-                        if  ScriptStorage.Melees[Melee] then
-                            MSet = false
-                        end
-                        break
-                    end
-                end
 
                 -- Nếu chưa đủ level melee hiện tại
                 if not MSet and ScriptStorage.Melees[Melee] and ScriptStorage.Melees[Melee] < Data.NextLevelRequirement then 
